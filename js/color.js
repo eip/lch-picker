@@ -5,40 +5,27 @@
 // Fast color space conversion
 // Conversion logic from https://drafts.csswg.org/css-color-4/#color-conversion-code
 
-// Convert LCH to sRGB
-function lch2sRGB(values) {
-  // Convert from polar form LCH to Lab
+// Convert OKLCH to sRGB
+function oklch2sRGB(values) {
+  // Convert from polar form OKLCH to OKLab
   let x = values[0];
   let y = values[1];
   let z = (values[2] * Math.PI) / 180;
   values[1] = y * Math.cos(z);
   values[2] = y * Math.sin(z);
 
-  // Convert Lab to D50-adapted XYZ
-  // http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-  const κ = 903.2962962962963; // 29^3/3^3
-  const ε = 0.008856451679035631; // 6^3/29^3
+  // Convert OKLab to XYZ (D65)
+  const l = x + 0.3963377774 * values[1] + 0.2158037573 * values[2];
+  const m = x - 0.1055613458 * values[1] - 0.0638541728 * values[2];
+  const s = x - 0.0894841775 * values[1] - 1.291485548 * values[2];
 
-  // Compute f, starting with the luminance-related term
-  const f1 = (x + 16) / 116;
-  const f0 = values[1] / 500 + f1;
-  const f2 = f1 - values[2] / 200;
+  const l3 = l * l * l;
+  const m3 = m * m * m;
+  const s3 = s * s * s;
 
-  // Compute and scale xyz by D50 reference white
-  const f0cube = f0 * f0 * f0;
-  const f2cube = f2 * f2 * f2;
-  values[0] = (f0cube > ε ? f0cube : (116 * f0 - 16) / κ) * 0.96422;
-  const xk = (x + 16) / 116;
-  values[1] = x > κ * ε ? xk * xk * xk : x / κ;
-  values[2] = (f2cube > ε ? f2cube : (116 * f2 - 16) / κ) * 0.82521;
-
-  // Bradford chromatic adaptation from D50 to D65
-  x = values[0];
-  y = values[1];
-  z = values[2];
-  values[0] = 0.9555766 * x - 0.0230393 * y + 0.0631636 * z;
-  values[1] = -0.0282895 * x + 1.0099416 * y + 0.0210077 * z;
-  values[2] = 0.0122982 * x - 0.020483 * y + 1.3299098 * z;
+  values[0] = 1.2270138511 * l3 - 0.5577999807 * m3 + 0.281256149 * s3;
+  values[1] = -0.0405801784 * l3 + 1.1122568696 * m3 - 0.0716766787 * s3;
+  values[2] = -0.0763812845 * l3 - 0.4214819784 * m3 + 1.5861632204 * s3;
 
   // Convert XYZ to linear-light sRGB
   x = values[0];
@@ -78,11 +65,11 @@ function lch2sRGB(values) {
   return values;
 }
 
-// Moves an lch color into the sRGB gamut by holding the l and h steady,
+// Moves an OKLCH color into the sRGB gamut by holding the l and h steady,
 // and adjusting the c via binary-search until the color is on the sRGB boundary.
-function lch2sRGBForce(values) {
+function oklch2sRGBForce(values) {
   const lch = [...values];
-  lch2sRGB(values);
+  oklch2sRGB(values);
   if (values.length < 4 || values[3] === 0) return values; // no clipped flag ys passed or color is not clipped
 
   let hiC = lch[1];
@@ -93,7 +80,7 @@ function lch2sRGBForce(values) {
     values[0] = lch[0];
     values[1] = lch[1];
     values[2] = lch[2];
-    lch2sRGB(values);
+    oklch2sRGB(values);
     if (values[3] === 0) loC = lch[1];
     else hiC = lch[1];
   }
@@ -101,8 +88,8 @@ function lch2sRGBForce(values) {
   return values;
 }
 
-// Convert sRGB to LCH
-function sRGB2lch(values) {
+// Convert sRGB to OKLCH
+function sRGB2oklch(values) {
   // convert an array of sRGB values in the range 0.0 - 1.0
   // to linear light (un-companded) form.
   // https://en.wikipedia.org/wiki/SRGB
@@ -111,11 +98,7 @@ function sRGB2lch(values) {
     values[i] = values[i] < 0.04045 ? values[i] / 12.92 : ((values[i] + 0.055) / 1.055) ** pow;
   }
 
-  // convert an array of linear-light sRGB values to CIE XYZ
-  // using sRGB's own white, D65 (no chromatic adaptation)
-  // http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-  // also
-  // https://www.image-engineering.de/library/technotes/958-how-to-convert-between-srgb-and-ciexyz
+  // convert an array of linear-light sRGB values to CIE XYZ (D65)
   let x = values[0];
   let y = values[1];
   let z = values[2];
@@ -123,37 +106,17 @@ function sRGB2lch(values) {
   values[1] = 0.2126729 * x + 0.7151522 * y + 0.072175 * z;
   values[2] = 0.0193339 * x + 0.119192 * y + 0.9503041 * z;
 
-  // Bradford chromatic adaptation from D65 to D50
-  // The matrix below is the result of three operations:
-  // - convert from XYZ to retinal cone domain
-  // - scale components from one reference white to another
-  // - convert back to XYZ
-  // http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+  // Convert XYZ (D65) to OKLab
   x = values[0];
   y = values[1];
   z = values[2];
-  values[0] = 1.0478112 * x + 0.0228866 * y - 0.050127 * z;
-  values[1] = 0.0295424 * x + 0.9904844 * y - 0.0170491 * z;
-  values[2] = -0.0092345 * x + 0.0150436 * y + 0.7521316 * z;
+  const l = Math.cbrt(0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z);
+  const m = Math.cbrt(0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z);
+  const s = Math.cbrt(0.0482003018 * x + 0.2643662691 * y + 0.633851707 * z);
 
-  // Assuming XYZ is relative to D50, convert to CIE Lab
-  // from CIE standard, which now defines these as a rational fraction
-  const ε = 0.008856451679035631; // 6^3/29^3
-  const κ = 903.2962962962963; // 29^3/3^3
-
-  // compute xyz, which is XYZ scaled relative to D50 reference white
-  x = values[0] / 0.96422;
-  y = values[1];
-  z = values[2] / 0.82521;
-
-  // now compute f
-  const f0 = x > ε ? Math.cbrt(x) : (κ * x + 16) / 116;
-  const f1 = y > ε ? Math.cbrt(y) : (κ * y + 16) / 116;
-  const f2 = z > ε ? Math.cbrt(z) : (κ * z + 16) / 116;
-
-  values[0] = 116 * f1 - 16; // L
-  values[1] = 500 * (f0 - f1); // a
-  values[2] = 200 * (f1 - f2); // b
+  values[0] = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s; // L
+  values[1] = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s; // a
+  values[2] = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s; // b
 
   // Convert to polar form
   z = (Math.atan2(values[2], values[1]) * 180) / Math.PI; // Hue
@@ -190,4 +153,4 @@ function hex2sRGB(hex) {
   return result;
 }
 
-if (typeof module === 'object' && module.exports) module.exports = { lch2sRGB, lch2sRGBForce, sRGB2lch, sRGBfloat2int, hex2sRGB };
+if (typeof module === 'object' && module.exports) module.exports = { oklch2sRGB, oklch2sRGBForce, sRGB2oklch, sRGBfloat2int, hex2sRGB };

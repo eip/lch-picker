@@ -1,12 +1,12 @@
-/* global lch2sRGB, lch2sRGBForce, sRGB2lch, sRGBfloat2int, hex2sRGB */
+/* global oklch2sRGB, oklch2sRGBForce, sRGB2oklch, sRGBfloat2int, hex2sRGB */
 
 'use strict';
 
 const state = {
   colorSpace: {
     dimension: {
-      l: { name: 'lightness', index: 0, min: 0, max: 100, step: 0.1 },
-      c: { name: 'chroma', index: 1, min: 0, max: 135, step: 0.1 },
+      l: { name: 'lightness', index: 0, min: 0, max: 1, step: 0.001 },
+      c: { name: 'chroma', index: 1, min: 0, max: 0.37, step: 0.001 },
       h: { name: 'hue', index: 2, min: 0, max: 360, step: 0.5 }
     }
   },
@@ -171,7 +171,7 @@ function renderColorSpace() {
         floatColorClipped[iy] = yv;
         floatColorClipped[iz] = zv;
         let pixel = clippedPixel;
-        lch2sRGB(floatColorClipped);
+        oklch2sRGB(floatColorClipped);
         if (floatColorClipped[3] !== 1) {
           pixel = coloredPixel;
           sRGBfloat2int(floatColorClipped, pixel);
@@ -197,7 +197,7 @@ function getColor([x, y]) {
   floatColorClipped[state.dimX.index] = x;
   floatColorClipped[state.dimY.index] = y;
   floatColorClipped[state.dimZ.index] = state.zval;
-  lch2sRGBForce(floatColorClipped);
+  oklch2sRGBForce(floatColorClipped);
   sRGBfloat2int(floatColorClipped, coloredPixel);
   return { value: `#${hex(coloredPixel[0])}${hex(coloredPixel[1])}${hex(coloredPixel[2])}`, clipped: !!floatColorClipped[3] };
 
@@ -294,7 +294,7 @@ function updateAxes(axes) {
   state.dimZ = state.colorSpace.dimension[axes[2]];
   const [ix, iy, iz] = [...axes].map(a => state.axes.indexOf(a));
   if (is(String, state.from)) {
-    const lch = sRGB2lch(hex2sRGB(state.from));
+    const lch = sRGB2oklch(hex2sRGB(state.from));
     state.from = [lch[state.dimX.index], lch[state.dimY.index]];
     state.zval = lch[state.dimZ.index];
   } else {
@@ -303,7 +303,7 @@ function updateAxes(axes) {
     state.zval = prevFrom[iz];
   }
   if (is(String, state.to)) {
-    const lch = sRGB2lch(hex2sRGB(state.to));
+    const lch = sRGB2oklch(hex2sRGB(state.to));
     state.to = [lch[state.dimX.index], lch[state.dimY.index]];
   } else {
     const prevTo = [...state.to, prevZ];
