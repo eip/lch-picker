@@ -132,8 +132,8 @@ input[type="range"]:focus::-moz-range-thumb {
   grid-template-areas:
     " . cp vs  .  .  .  ."
     "hl cs cs cs sw sw  ."
-    "cl cs cs cs sw sw  ."
     "hc cs cs cs sw sw  ."
+    "cl cs cs cs sw sw  ."
     " . cs cs cs sw sw  ."
     " . cs cs cs bc bc  ."
     " . cs cs cs bm bp  ."
