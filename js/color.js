@@ -58,7 +58,7 @@ function oklch2sRGB(values) {
         values[i] = values[i] > 0.0031308 ? 1.055 * values[i] ** pow - 0.055 : values[i] * 12.92;
         continue; // eslint-disable-line no-continue
       }
-      values[i] = 0; // clipped
+      values[i] = values[i] > maxVal ? 1 : 0; // clipped (clamped to boundary)
       values[3] = 1;
     }
   }
@@ -75,7 +75,7 @@ function oklch2sRGBForce(values) {
   let hiC = lch[1];
   let loC = 0;
   const ε = 0.0005;
-  while (hiC - loC > ε || values[3] === 1) {
+  while ((hiC - loC > ε || values[3] === 1) && hiC > ε) {
     lch[1] = (hiC + loC) / 2;
     values[0] = lch[0];
     values[1] = lch[1];
