@@ -13,8 +13,6 @@
   },
   "homepage": "https://github.com/eip/lch-picker",
   "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2"
+    "@biomejs/biome": "^2.4.16"
   }
 }
