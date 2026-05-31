@@ -155,6 +155,13 @@ function makeDraggable(element) {
     return value < min ? min : value > max ? max : value;
   }
 
+  function roundToStep(value, dim, step) {
+    const clamped = limitValue(value, dim);
+    const snapped = dim.min + Math.round((clamped - dim.min) / step) * step;
+    const precision = Math.ceil(-Math.log10(step));
+    return limitValue(Number(snapped.toFixed(precision)), dim);
+  }
+
   function doKeyMove(e) {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) return;
 
@@ -171,8 +178,8 @@ function makeDraggable(element) {
     if (e.code === 'ArrowUp') nextY += stepY;
     if (e.code === 'ArrowDown') nextY -= stepY;
 
-    state[key][0] = limitValue(nextX, state.dimX);
-    state[key][1] = limitValue(nextY, state.dimY);
+    state[key][0] = roundToStep(nextX, state.dimX, stepX);
+    state[key][1] = roundToStep(nextY, state.dimY, stepY);
     element.style.left = `${posScale(state[key][0], state.dimX)}px`;
     element.style.top = `${posScale(state[key][1], state.dimY, 0, true)}px`;
     updateColors();
