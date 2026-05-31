@@ -25,8 +25,10 @@ const gradientSize = canvasSize + handleSize;
 const colorSpace = select('#color-space');
 const colorSpaceCtx = colorSpace.getContext('2d');
 const slider = select('#slider');
-const sliderAxisLabel = select('#slider-axis');
-const sliderValueLabel = select('#slider-value');
+const handleNameLabel = select('#handle-name');
+const lightnessValueLabel = select('#lightness-value');
+const chromaValueLabel = select('#chroma-value');
+const hueValueLabel = select('#hue-value');
 const debugInfo = select('#debug-info');
 const [minSteps, maxSteps] = [3, 12];
 
@@ -39,6 +41,21 @@ coloredPixel.set([0, 0, 0, 255]);
 const floatColorClipped = [0.0, 0.0, 0.0, 0];
 let imgData;
 let locationTimer = null;
+
+function updateStatusLine() {
+  const handleKey = is(Array, state[state.activeHandle]) ? state.activeHandle : 'from';
+  if (!is(Array, state[handleKey])) return;
+
+  const oklch = [0, 0, 0];
+  oklch[state.dimX.index] = state[handleKey][0];
+  oklch[state.dimY.index] = state[handleKey][1];
+  oklch[state.dimZ.index] = state.zval;
+
+  handleNameLabel.innerText = `[${handleKey}]`;
+  lightnessValueLabel.innerText = oklch[0].toFixed(3);
+  chromaValueLabel.innerText = oklch[1].toFixed(4);
+  hueValueLabel.innerText = oklch[2].toFixed(1);
+}
 
 function is(type, value) {
   return ![undefined, null].includes(value) && (typeof type === 'string' ? value.constructor.name : value.constructor) === type;
@@ -96,9 +113,14 @@ function makeDraggable(element) {
   state[key] = state[key] || {};
   element.tabIndex = 0;
   element.addEventListener('mousedown', startDrag);
+  element.addEventListener('focus', () => {
+    state.activeHandle = key;
+    updateStatusLine();
+  });
   element.addEventListener('keydown', doKeyMove);
 
   function startDrag(e) {
+    state.activeHandle = key;
     element.focus();
     e.preventDefault();
     elementPos.x = element.offsetLeft;
@@ -315,6 +337,7 @@ function updateColors() {
     locationTimer = null;
     updateLocation();
   }, 300);
+  updateStatusLine();
 }
 
 function updateAxes(axes) {
@@ -342,7 +365,6 @@ function updateAxes(axes) {
   }
   state.axes = axes;
 
-  sliderAxisLabel.innerText = capitalize(state.dimZ.name);
   slider.min = state.dimZ.min;
   slider.max = state.dimZ.max;
   slider.step = state.dimZ.step / 1000;
@@ -414,7 +436,7 @@ slider.addEventListener('keydown', e => {
 
 slider.addEventListener('input', () => {
   state.zval = parseFloat(slider.value);
-  sliderValueLabel.innerText = slider.value;
+  updateStatusLine();
   if (state.debug && state.renderTime) debugInfo.innerText = `rendered in ${state.renderTime.toFixed(1)} ms`;
   if (!state.busy) {
     window.requestAnimationFrame(renderColorSpace);
