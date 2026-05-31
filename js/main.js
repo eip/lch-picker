@@ -165,6 +165,10 @@ function makeDraggable(element) {
 		state.activeHandle = key;
 		updateStatusLine();
 	});
+	element.addEventListener("blur", () => {
+		state.activeHandle = null;
+		updateStatusLine();
+	});
 	element.addEventListener("keydown", doKeyMove);
 
 	function startDrag(e) {
@@ -553,7 +557,6 @@ select(".tab[data-axes]").forEach((el) => {
 select(".gradient .handle").forEach(makeDraggable);
 
 document.addEventListener("paste", (e) => {
-  console.log("paste event", e);
 	const target = e.target;
 	if (
 		target instanceof HTMLInputElement ||
