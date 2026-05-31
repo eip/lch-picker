@@ -22,11 +22,11 @@
   <body>
     <input id="clipboard" class="visually-hidden hidden" type="text" />
     <div class="widget">
-      <button class="tab cp top active" data-view="palette"><i class="fas fa-palette"></i> Colorpicker</button>
-      <button class="tab vis top" data-view="visualized"><i class="far fa-image"></i> Visualized</button>
-      <button class="tab hl left active" data-axes="hlc" data-owner="palette">H-L</button>
-      <button class="tab hc left" data-axes="hcl" data-owner="palette">H-C</button>
-      <button class="tab cl left" data-axes="clh" data-owner="palette">C-L</button>
+      <button type="button" class="tab cp top active" data-view="palette"><i class="fas fa-palette"></i> Colorpicker</button>
+      <button type="button" class="tab vis top" data-view="visualized"><i class="far fa-image"></i> Visualized</button>
+      <button type="button" class="tab hl left active" data-axes="hlc" data-owner="palette">H-L</button>
+      <button type="button" class="tab hc left" data-axes="hcl" data-owner="palette">H-C</button>
+      <button type="button" class="tab cl left" data-axes="clh" data-owner="palette">C-L</button>
       <input id="slider" class="slider" data-owner="palette" type="range" />
       <div class="color-value" data-owner="palette">
         <span id="handle-name">L</span>:
@@ -41,24 +41,28 @@
         <span id="debug-info"></span>
       </div>
       <div class="swatches" data-owner="palette"></div>
-      <button class="button copy" data-owner="palette"><i class="fas fa-copy"></i> Copy</button>
-      <button class="button minus" data-owner="palette"><i class="fas fa-minus"></i></button>
-      <button class="button plus" data-owner="palette"><i class="fas fa-plus"></i></button>
-      <button class="button reset" data-owner="palette"><i class="fas fa-redo-alt"></i> Reset</button>
+      <button type="button" class="button copy" data-owner="palette"><i class="fas fa-copy"></i> Copy</button>
+      <button type="button" class="button minus" data-owner="palette"><i class="fas fa-minus"></i></button>
+      <button type="button" class="button plus" data-owner="palette"><i class="fas fa-plus"></i></button>
+      <button type="button" class="button reset" data-owner="palette"><i class="fas fa-redo-alt"></i> Reset</button>
       <div id="canvas" class="canvas" data-owner="palette">
         <div class="pattern"></div>
         <canvas id="color-space"></canvas>
         <div class="gradient">
           <svg data-key="line">
+            <title>Gradient line</title>
             <line x1="-1" y1="-1" x2="-1" y2="-1"></line>
           </svg>
           <div class="handle" data-key="from" style="top: -100px;"></div>
-          <svg data-key="swatches"></svg>
+          <svg data-key="swatches">
+            <title>Gradient swatches</title>
+          </svg>
           <div class="handle" data-key="to" style="top: -100px;"></div>
         </div>
       </div>
       <div class="map hidden" data-owner="visualized">
         <svg height="460" width="562">
+          <title>Map preview</title>
           <path
             d="m377.50390478 264.1264382 18.31566137-1.62506368 3.07010453 10.92461299 4.46664503 16.05384907 1.64852098 3.46341649 1.41648857 1.91226398-.32411878 1.32653889 1.33145289.63199822-1.64440753 1.83798889.24709541 1.61730378-.69765713 2.29809419 1.51914196 3.75801337-.38590326 3.47547397 1.60648882 3.38649493-5.39755838.68448496-23.09769187 2.30447396-.21158822 1.72802391 2.69667936 2.25099631-.2319559 2.15662461.94432112.98198217-1.46645488 2.05349518-1.48138077.55826546-2.97676191-1.87576326-.57373284-3.15274018-.8765852-.2816078-.82798421 2.48834424-.17041371 2.36102133-2.90646554-.40284154-2.41703367-19.67055448.48888016-24.81409968.32803395-14.33513425-1.20050027-1.26070312z"
           />

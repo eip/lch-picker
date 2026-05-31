@@ -20,7 +20,7 @@
 
   <body>
     <div>
-      <button id="test" disabled onClick="test()">Run Test</button>
+      <button type="button" id="test" disabled onClick="test()">Run Test</button>
       <input id="times" type="number" min="10" max="1000000" value="100000" />
       <label for="times">times</label>
     </div>
@@ -48,7 +48,7 @@
         return [randomAx(l), randomAx(c), randomAx(h)];
       }
 
-      function test(times) {
+      function _test(times) {
         if (!times) times = document.getElementById("times").value;
         document.getElementById("status").innerText = `Running test  ${times} times...`;
         setTimeout(runTest, 50, times);

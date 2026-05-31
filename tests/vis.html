@@ -24,14 +24,14 @@
       const svg = vis.append("svg:svg").attr("width", 562).attr("height", 460);
       const states = svg.append("svg:g").attr("id", "states");
       function choropleth(colors) {
-        const pad = d3.format("05d");
+        const _pad = d3.format("05d");
         d3.json("data/us-states.json").then(json => {
           states
             .selectAll("path")
             .data(json.features)
             .enter()
             .append("svg:path")
-            .attr("style", d => `fill:${colors[(Math.random() * colors.length) | 0]};`)
+            .attr("style", _d => `fill:${colors[(Math.random() * colors.length) | 0]};`)
             .attr("d", path);
           d3.select("#visualization").classed("loading", false);
         });

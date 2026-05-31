@@ -1,18 +1,18 @@
 {
-  "name": "lch-picker",
-  "version": "1.0.0",
-  "description": "This project has been forked from [Colorpicker for data](https://github.com/tristen/hcl-picker) by Tristen Brown but changed a lot.",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/eip/lch-picker.git"
-  },
-  "author": "eip",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/eip/lch-picker/issues"
-  },
-  "homepage": "https://github.com/eip/lch-picker",
-  "devDependencies": {
-    "@biomejs/biome": "^2.4.16"
-  }
+	"name": "lch-picker",
+	"version": "1.0.0",
+	"description": "This project has been forked from [Colorpicker for data](https://github.com/tristen/hcl-picker) by Tristen Brown but changed a lot.",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/eip/lch-picker.git"
+	},
+	"author": "eip",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/eip/lch-picker/issues"
+	},
+	"homepage": "https://github.com/eip/lch-picker",
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.16"
+	}
 }
