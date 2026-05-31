@@ -70,6 +70,12 @@ function applyColorToHandle(color) {
 	if (!hex) return false;
 
 	const oklch = sRGB2oklch(hex2sRGB(hex));
+  console.log(oklch);
+  if (handleKey === "from" && oklch[2] > state.colorSpace.dimension.h.max - state.colorSpace.dimension.h.step / 2) {
+    oklch[2] = 0;    
+  } else if (handleKey === "to" && oklch[2] < state.colorSpace.dimension.h.step / 2) {
+    oklch[2] = state.colorSpace.dimension.h.max;
+  }
 	state[handleKey] = [oklch[state.dimX.index], oklch[state.dimY.index]];
 	state.zval = oklch[state.dimZ.index];
 	slider.value = state.zval.toFixed(Math.round(-Math.log10(state.dimZ.step)));
