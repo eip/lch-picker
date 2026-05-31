@@ -42,6 +42,46 @@ const floatColorClipped = [0.0, 0.0, 0.0, 0];
 let imgData;
 let locationTimer = null;
 
+function colorStringToHex(value) {
+	const color = String(value || "").trim();
+	if (!color || !CSS.supports("color", color)) return null;
+	const probe = document.createElement("span");
+	probe.style.color = color;
+	probe.style.display = "none";
+	document.body.appendChild(probe);
+	const parsed = getComputedStyle(probe).color;
+	probe.remove();
+	const match = parsed.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+	if (!match) return null;
+	return `#${hex(+match[1])}${hex(+match[2])}${hex(+match[3])}`;
+
+	function hex(num) {
+		const clamped = num < 0 ? 0 : num > 255 ? 255 : num;
+		const result = clamped.toString(16);
+		return result.length === 1 ? `0${result}` : result;
+	}
+}
+
+function applyColorToHandle(color) {
+	const handleKey = is(Array, state[state.activeHandle])
+		? state.activeHandle
+		: "from";
+	const hex = colorStringToHex(color);
+	if (!hex) return false;
+
+	const oklch = sRGB2oklch(hex2sRGB(hex));
+	state[handleKey] = [oklch[state.dimX.index], oklch[state.dimY.index]];
+	state.zval = oklch[state.dimZ.index];
+	slider.value = state.zval.toFixed(Math.round(-Math.log10(state.dimZ.step)));
+	positionHandles();
+	updateColors();
+	if (!state.busy) {
+		window.requestAnimationFrame(renderColorSpace);
+		state.busy = true;
+	}
+	return true;
+}
+
 function updateStatusLine() {
 	const handleKey = is(Array, state[state.activeHandle])
 		? state.activeHandle
@@ -511,6 +551,20 @@ select(".tab[data-axes]").forEach((el) => {
 });
 
 select(".gradient .handle").forEach(makeDraggable);
+
+document.addEventListener("paste", (e) => {
+  console.log("paste event", e);
+	const target = e.target;
+	if (
+		target instanceof HTMLInputElement ||
+		target instanceof HTMLTextAreaElement ||
+		target?.isContentEditable
+	)
+		return;
+	const pasted = e.clipboardData?.getData("text");
+	if (!pasted) return;
+	if (applyColorToHandle(pasted)) e.preventDefault();
+});
 
 select(".button.copy", 1).addEventListener("click", () => {
 	const focused = document.activeElement;
