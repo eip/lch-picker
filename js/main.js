@@ -3,6 +3,7 @@
 'use strict';
 
 const state = {
+  // debug: true,
   colorSpace: {
     dimension: {
       l: { name: 'lightness', index: 0, min: 0, max: 1, step: 0.001 },
@@ -93,9 +94,12 @@ function makeDraggable(element) {
   const cursorPos = { x: 0, y: 0 };
   const { key } = element.dataset;
   state[key] = state[key] || {};
+  element.tabIndex = 0;
   element.addEventListener('mousedown', startDrag);
+  element.addEventListener('keydown', doKeyMove);
 
   function startDrag(e) {
+    element.focus();
     e.preventDefault();
     elementPos.x = element.offsetLeft;
     elementPos.y = element.offsetTop;
@@ -122,6 +126,33 @@ function makeDraggable(element) {
     state[key][1] = posUnscale(y, state.dimY, true);
     element.style.left = `${x}px`;
     element.style.top = `${y}px`;
+    updateColors();
+  }
+
+  function limitValue(value, { min, max }) {
+    return value < min ? min : value > max ? max : value;
+  }
+
+  function doKeyMove(e) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) return;
+
+    e.preventDefault();
+
+    const stepFactor = e.shiftKey ? 10 : 1;
+    const stepX = state.dimX.step * stepFactor;
+    const stepY = state.dimY.step * stepFactor;
+    let nextX = state[key][0];
+    let nextY = state[key][1];
+
+    if (e.code === 'ArrowLeft') nextX -= stepX;
+    if (e.code === 'ArrowRight') nextX += stepX;
+    if (e.code === 'ArrowUp') nextY += stepY;
+    if (e.code === 'ArrowDown') nextY -= stepY;
+
+    state[key][0] = limitValue(nextX, state.dimX);
+    state[key][1] = limitValue(nextY, state.dimY);
+    element.style.left = `${posScale(state[key][0], state.dimX)}px`;
+    element.style.top = `${posScale(state[key][1], state.dimY, 0, true)}px`;
     updateColors();
   }
 
