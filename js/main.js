@@ -5,7 +5,7 @@ const state = {
 	colorSpace: {
 		dimension: {
 			l: { name: "lightness", index: 0, min: 0, max: 1, step: 0.001 },
-			c: { name: "chroma", index: 1, min: 0, max: 0.37, step: 0.0005 },
+			c: { name: "chroma", index: 1, min: 0, max: 0.35, step: 0.0005 },
 			h: { name: "hue", index: 2, min: 0, max: 360, step: 0.5 },
 		},
 	},
