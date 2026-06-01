@@ -23,12 +23,24 @@ const gradientSize = canvasSize + handleSize;
 const colorSpace = select("#color-space");
 const colorSpaceCtx = colorSpace.getContext("2d");
 const slider = select("#slider");
+const gradientHandles = select(".gradient .handle");
+const gradientLine = select(".gradient svg[data-key=line] line", 1);
+const gradientSwatchSvg = select(".gradient svg[data-key=swatches]", 1);
+const swatchesContainer = select(".swatches", 1);
 const handleNameLabel = select("#handle-name");
+const lightnessAxisLabel = select("#lightness-axis");
+const chromaAxisLabel = select("#chroma-axis");
+const hueAxisLabel = select("#hue-axis");
 const lightnessValueLabel = select("#lightness-value");
 const chromaValueLabel = select("#chroma-value");
 const hueValueLabel = select("#hue-value");
 const debugInfo = select("#debug-info");
 const [minSteps, maxSteps] = [3, 12];
+const sliderAxisElementMap = {
+	lightness: [lightnessAxisLabel, lightnessValueLabel],
+	chroma: [chromaAxisLabel, chromaValueLabel],
+	hue: [hueAxisLabel, hueValueLabel],
+};
 
 const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
 
@@ -39,6 +51,7 @@ coloredPixel.set([0, 0, 0, 255]);
 const floatColorClipped = [0.0, 0.0, 0.0, 0];
 let imgData;
 let locationTimer = null;
+let highlightedSliderAxis = null;
 
 function colorStringToHex(value) {
 	const color = String(value || "").trim();
@@ -84,10 +97,22 @@ function applyColorToHandle(color) {
 }
 
 function highlightSliderAxis() {
-	select(".color-value span[id$='-axis'], .color-value span[id$='-value']").forEach((el) => {
-		if (el.id.startsWith(state.dimZ.name)) el.classList.add("slider-axis");
-		else el.classList.remove("slider-axis");
-	});
+	if (!state.dimZ) return;
+	const axisName = state.dimZ.name;
+	if (highlightedSliderAxis === axisName) return;
+
+	if (highlightedSliderAxis && sliderAxisElementMap[highlightedSliderAxis]) {
+		sliderAxisElementMap[highlightedSliderAxis].forEach((el) => {
+			el.classList.remove("slider-axis");
+		});
+	}
+
+	if (sliderAxisElementMap[axisName]) {
+		sliderAxisElementMap[axisName].forEach((el) => {
+			el.classList.add("slider-axis");
+		});
+		highlightedSliderAxis = axisName;
+	}
 }
 
 function updateStatusLine() {
@@ -271,25 +296,35 @@ function renderColorSpace() {
 		const { index: ix, min: xmin, max: xmax } = state.dimX;
 		const { index: iy, min: ymin, max: ymax } = state.dimY;
 		const { index: iz } = state.dimZ;
+		const xStep = (xmax - xmin) / colorSpace.width;
+		const yStep = (ymax - ymin) / colorSpace.height;
 
 		let startTime = 0;
 		if (state.debug) startTime = performance.now();
 		const { width, height } = colorSpace;
-		for (let x = 0; x < width; x++) {
-			const xv = xmin + (x * (xmax - xmin)) / width;
-			for (let y = 0; y < height; y++) {
-				const yv = ymin + (y * (ymax - ymin)) / height;
-				const idx = (x + (height - y - 1) * width) * 4;
+		const data = imgData.data;
+		for (let row = 0; row < height; row++) {
+			const yv = ymax - row * yStep;
+			let xv = xmin;
+			let idx = row * width * 4;
+			for (let x = 0; x < width; x++) {
 				floatColorClipped[ix] = xv;
 				floatColorClipped[iy] = yv;
 				floatColorClipped[iz] = zv;
-				let pixel = clippedPixel;
 				oklch2sRGB(floatColorClipped);
-				if (floatColorClipped[3] !== 1) {
-					pixel = coloredPixel;
-					sRGBfloat2int(floatColorClipped, pixel);
+				if (floatColorClipped[3] === 1) {
+					data[idx] = 255;
+					data[idx + 1] = 0;
+					data[idx + 2] = 0;
+					data[idx + 3] = 0;
+				} else {
+					data[idx] = floatColorClipped[0] * 255 + 0.5;
+					data[idx + 1] = floatColorClipped[1] * 255 + 0.5;
+					data[idx + 2] = floatColorClipped[2] * 255 + 0.5;
+					data[idx + 3] = 255;
 				}
-				imgData.data.set(pixel, idx);
+				idx += 4;
+				xv += xStep;
 			}
 		}
 		if (state.debug) state.renderTime = performance.now() - startTime;
@@ -324,7 +359,7 @@ function getColor([x, y]) {
 }
 
 function positionHandles() {
-	const [handleFrom, handleTo] = select(".gradient .handle");
+	const [handleFrom, handleTo] = gradientHandles;
 	handleFrom.style.left = `${posScale(state.from[0], state.dimX)}px`;
 	handleFrom.style.top = `${posScale(state.from[1], state.dimY, 0, true)}px`;
 	handleTo.style.left = `${posScale(state.to[0], state.dimX)}px`;
@@ -336,28 +371,26 @@ function updateColors() {
 	state.colors.length = state.steps;
 	state.colors[0] = getColor(state.from);
 	state.colors[state.steps - 1] = getColor(state.to);
-	select(".gradient .handle").forEach((e) => {
+	gradientHandles.forEach((e) => {
 		const color = state.colors[e.dataset.key === "from" ? 0 : state.steps - 1];
 		e.style.backgroundColor = color.value;
 		e.classList[color.clipped ? "add" : "remove"]("clipped");
 	});
-	const line = select(".gradient svg[data-key=line] line", 1);
 	const offset = handleSize / 2;
-	line.setAttributeNS(null, "x1", posScale(state.from[0], state.dimX, offset));
-	line.setAttributeNS(null, "y1", posScale(state.from[1], state.dimY, offset, true));
-	line.setAttributeNS(null, "x2", posScale(state.to[0], state.dimX, offset));
-	line.setAttributeNS(null, "y2", posScale(state.to[1], state.dimY, offset, true));
+	gradientLine.setAttributeNS(null, "x1", posScale(state.from[0], state.dimX, offset));
+	gradientLine.setAttributeNS(null, "y1", posScale(state.from[1], state.dimY, offset, true));
+	gradientLine.setAttributeNS(null, "x2", posScale(state.to[0], state.dimX, offset));
+	gradientLine.setAttributeNS(null, "y2", posScale(state.to[1], state.dimY, offset, true));
 	const spots = select(".gradient svg[data-key=swatches] circle");
 	if (spots.length > state.steps - 2) {
 		for (let i = state.steps - 2; i < spots.length; ++i) spots[i].remove();
 		spots.length = state.steps - 2;
 	}
 	if (spots.length < state.steps - 2) {
-		const swatchSvg = select(".gradient svg[data-key=swatches]", 1);
 		for (let i = spots.length; i < state.steps - 2; ++i) {
-			const swatch = document.createElementNS(swatchSvg.namespaceURI, "circle");
+			const swatch = document.createElementNS(gradientSwatchSvg.namespaceURI, "circle");
 			swatch.setAttributeNS(null, "r", swatchSize / 2);
-			swatchSvg.appendChild(swatch);
+			gradientSwatchSvg.appendChild(swatch);
 			spots.push(swatch);
 		}
 	}
@@ -371,13 +404,12 @@ function updateColors() {
 		swatches.length = labels.length = state.steps; // eslint-disable-line no-multi-assign
 	}
 	if (swatches.length < state.steps) {
-		const parent = select(".swatches", 1);
 		for (let i = swatches.length; i < state.steps; ++i) {
 			const swatch = document.createElement("div");
-			parent.appendChild(swatch);
+			swatchesContainer.appendChild(swatch);
 			swatches.push(swatch);
 			const label = document.createElement("label");
-			parent.appendChild(label);
+			swatchesContainer.appendChild(label);
 			labels.push(label);
 		}
 	}
