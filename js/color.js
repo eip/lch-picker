@@ -45,10 +45,7 @@ function oklch2sRGB(values) {
 			} else if (values[i] > maxVal) {
 				values[i] = 1;
 			} else {
-				values[i] =
-					values[i] > 0.0031308
-						? 1.055 * values[i] ** pow - 0.055
-						: values[i] * 12.92;
+				values[i] = values[i] > 0.0031308 ? 1.055 * values[i] ** pow - 0.055 : values[i] * 12.92;
 			}
 		}
 	} else {
@@ -56,10 +53,7 @@ function oklch2sRGB(values) {
 		for (let i = 0; i < 3; ++i) {
 			if (values[i] >= minVal && values[i] <= maxVal) {
 				// not clipped
-				values[i] =
-					values[i] > 0.0031308
-						? 1.055 * values[i] ** pow - 0.055
-						: values[i] * 12.92;
+				values[i] = values[i] > 0.0031308 ? 1.055 * values[i] ** pow - 0.055 : values[i] * 12.92;
 				continue; // eslint-disable-line no-continue
 			}
 			values[i] = values[i] > maxVal ? 1 : 0; // clipped (clamped to boundary)
@@ -99,10 +93,7 @@ function sRGB2oklch(values) {
 	// https://en.wikipedia.org/wiki/SRGB
 	const pow = 2.4;
 	for (let i = 0; i < 3; ++i) {
-		values[i] =
-			values[i] < 0.04045
-				? values[i] / 12.92
-				: ((values[i] + 0.055) / 1.055) ** pow;
+		values[i] = values[i] < 0.04045 ? values[i] / 12.92 : ((values[i] + 0.055) / 1.055) ** pow;
 	}
 
 	// convert an array of linear-light sRGB values to CIE XYZ (D65)

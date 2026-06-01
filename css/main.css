@@ -81,6 +81,11 @@ button:focus {
 	outline: 0;
 }
 
+.color-value span.slider-axis {
+	font-weight: bold;
+	color: #e0c58b;
+}
+
 input[type="range"] {
 	-webkit-appearance: none;
 	-moz-appearance: none;

@@ -17,9 +17,7 @@ const state = {
 
 const docStyle = getComputedStyle(document.body);
 const canvasSize = parseFloat(docStyle.getPropertyValue("--canvas-size"));
-const handleSize = parseFloat(
-	docStyle.getPropertyValue("--gradient-handle-size"),
-);
+const handleSize = parseFloat(docStyle.getPropertyValue("--gradient-handle-size"));
 const swatchSize = (handleSize * 0.65) | 0;
 const gradientSize = canvasSize + handleSize;
 const colorSpace = select("#color-space");
@@ -63,19 +61,16 @@ function colorStringToHex(value) {
 }
 
 function applyColorToHandle(color) {
-	const handleKey = is(Array, state[state.activeHandle])
-		? state.activeHandle
-		: "from";
+	const handleKey = is(Array, state[state.activeHandle]) ? state.activeHandle : "from";
 	const hex = colorStringToHex(color);
 	if (!hex) return false;
 
 	const oklch = sRGB2oklch(hex2sRGB(hex));
-  console.log(oklch);
-  if (handleKey === "from" && oklch[2] > state.colorSpace.dimension.h.max - state.colorSpace.dimension.h.step / 2) {
-    oklch[2] = 0;    
-  } else if (handleKey === "to" && oklch[2] < state.colorSpace.dimension.h.step / 2) {
-    oklch[2] = state.colorSpace.dimension.h.max;
-  }
+	if (handleKey === "from" && oklch[2] > state.colorSpace.dimension.h.max - state.colorSpace.dimension.h.step / 2) {
+		oklch[2] = 0;
+	} else if (handleKey === "to" && oklch[2] < state.colorSpace.dimension.h.step / 2) {
+		oklch[2] = state.colorSpace.dimension.h.max;
+	}
 	state[handleKey] = [oklch[state.dimX.index], oklch[state.dimY.index]];
 	state.zval = oklch[state.dimZ.index];
 	slider.value = state.zval.toFixed(Math.round(-Math.log10(state.dimZ.step)));
@@ -88,10 +83,15 @@ function applyColorToHandle(color) {
 	return true;
 }
 
+function highlightSliderAxis() {
+	select(".color-value span[id$='-axis'], .color-value span[id$='-value']").forEach((el) => {
+		if (el.id.startsWith(state.dimZ.name)) el.classList.add("slider-axis");
+		else el.classList.remove("slider-axis");
+	});
+}
+
 function updateStatusLine() {
-	const handleKey = is(Array, state[state.activeHandle])
-		? state.activeHandle
-		: "from";
+	const handleKey = is(Array, state[state.activeHandle]) ? state.activeHandle : "from";
 	if (!is(Array, state[handleKey])) return;
 
 	const oklch = [0, 0, 0];
@@ -103,14 +103,11 @@ function updateStatusLine() {
 	lightnessValueLabel.innerText = oklch[0].toFixed(3);
 	chromaValueLabel.innerText = oklch[1].toFixed(4);
 	hueValueLabel.innerText = oklch[2].toFixed(1);
+	highlightSliderAxis();
 }
 
 function is(type, value) {
-	return (
-		![undefined, null].includes(value) &&
-		(typeof type === "string" ? value.constructor.name : value.constructor) ===
-			type
-	);
+	return ![undefined, null].includes(value) && (typeof type === "string" ? value.constructor.name : value.constructor) === type;
 }
 
 function _capitalize(str) {
@@ -119,9 +116,7 @@ function _capitalize(str) {
 
 function select(selector, first) {
 	if (first === undefined) first = selector.startsWith("#"); // eslint-disable-line no-param-reassign
-	return first
-		? document.querySelectorAll(selector)[0]
-		: [...document.querySelectorAll(selector)];
+	return first ? document.querySelectorAll(selector)[0] : [...document.querySelectorAll(selector)];
 }
 
 function isActive(element) {
@@ -221,8 +216,7 @@ function makeDraggable(element) {
 	}
 
 	function doKeyMove(e) {
-		if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.code))
-			return;
+		if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.code)) return;
 
 		e.preventDefault();
 
@@ -261,10 +255,7 @@ function renderColorSpace() {
 		while (state.scale < 4) {
 			state.scale++;
 			colorSpace.width = colorSpace.height = canvasSize / state.scale; // eslint-disable-line no-multi-assign
-			imgData = colorSpaceCtx.createImageData(
-				colorSpace.width,
-				colorSpace.height,
-			);
+			imgData = colorSpaceCtx.createImageData(colorSpace.width, colorSpace.height);
 			const start = performance.now();
 			doRender();
 			if (performance.now() - start < 100) break;
@@ -308,11 +299,7 @@ function renderColorSpace() {
 }
 
 function posScale(val, { min, max }, offset = 0, flip = false) {
-	return (
-		(flip
-			? canvasSize - ((val - min) * canvasSize) / (max - min)
-			: ((val - min) * canvasSize) / (max - min)) + offset
-	);
+	return (flip ? canvasSize - ((val - min) * canvasSize) / (max - min) : ((val - min) * canvasSize) / (max - min)) + offset;
 }
 
 function posUnscale(val, { min, max }, flip = false) {
@@ -357,17 +344,9 @@ function updateColors() {
 	const line = select(".gradient svg[data-key=line] line", 1);
 	const offset = handleSize / 2;
 	line.setAttributeNS(null, "x1", posScale(state.from[0], state.dimX, offset));
-	line.setAttributeNS(
-		null,
-		"y1",
-		posScale(state.from[1], state.dimY, offset, true),
-	);
+	line.setAttributeNS(null, "y1", posScale(state.from[1], state.dimY, offset, true));
 	line.setAttributeNS(null, "x2", posScale(state.to[0], state.dimX, offset));
-	line.setAttributeNS(
-		null,
-		"y2",
-		posScale(state.to[1], state.dimY, offset, true),
-	);
+	line.setAttributeNS(null, "y2", posScale(state.to[1], state.dimY, offset, true));
 	const spots = select(".gradient svg[data-key=swatches] circle");
 	if (spots.length > state.steps - 2) {
 		for (let i = state.steps - 2; i < spots.length; ++i) spots[i].remove();
@@ -404,21 +383,13 @@ function updateColors() {
 	}
 	for (let i = 0; i < state.steps; ++i) {
 		if (i >= 1 && i < state.steps - 1) {
-			const x =
-				state.from[0] + ((state.to[0] - state.from[0]) * i) / (state.steps - 1);
-			const y =
-				state.from[1] + ((state.to[1] - state.from[1]) * i) / (state.steps - 1);
+			const x = state.from[0] + ((state.to[0] - state.from[0]) * i) / (state.steps - 1);
+			const y = state.from[1] + ((state.to[1] - state.from[1]) * i) / (state.steps - 1);
 			state.colors[i] = getColor([x, y]);
 			spots[i - 1].setAttributeNS(null, "cx", posScale(x, state.dimX, offset));
-			spots[i - 1].setAttributeNS(
-				null,
-				"cy",
-				posScale(y, state.dimY, offset, true),
-			);
+			spots[i - 1].setAttributeNS(null, "cy", posScale(y, state.dimY, offset, true));
 			spots[i - 1].style.fill = state.colors[i].value;
-			spots[i - 1].classList[state.colors[i].clipped ? "add" : "remove"](
-				"clipped",
-			);
+			spots[i - 1].classList[state.colors[i].clipped ? "add" : "remove"]("clipped");
 		}
 		swatches[i].style.backgroundColor = state.colors[i].value;
 		labels[i].innerText = state.colors[i].value;
@@ -433,8 +404,7 @@ function updateColors() {
 }
 
 function updateAxes(axes) {
-	if (state.axes === axes && is(Array, state.from) && is(Array, state.to))
-		return;
+	if (state.axes === axes && is(Array, state.from) && is(Array, state.to)) return;
 	const prevZ = state.zval;
 	state.dimX = state.colorSpace.dimension[axes[0]];
 	state.dimY = state.colorSpace.dimension[axes[1]];
@@ -464,6 +434,7 @@ function updateAxes(axes) {
 	slider.value = state.zval.toFixed(Math.round(-Math.log10(slider.step)));
 	slider.dispatchEvent(new InputEvent("input"));
 	slider.step = state.dimZ.step;
+	highlightSliderAxis();
 	positionHandles();
 	updateColors();
 }
@@ -472,8 +443,7 @@ function updateStateFromLocation() {
 	const { hash } = window.location;
 	if (!hash) return;
 	const [axes, steps, from, to] = hash.slice(1).split("/");
-	if (select(".tab[data-axes]").some((e) => e.dataset.axes === axes))
-		state.axes = axes;
+	if (select(".tab[data-axes]").some((e) => e.dataset.axes === axes)) state.axes = axes;
 	const numSteps = parseInt(steps, 10);
 	if (numSteps >= minSteps && numSteps <= maxSteps) state.steps = numSteps;
 	const colorRe = /^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
@@ -506,17 +476,13 @@ window.addEventListener("load", init);
 
 document.addEventListener("keydown", (e) => {
 	if (+slider.step !== state.dimZ.step) return;
-	if (!["AltLeft", "AltRight", "ShiftLeft", "ShiftRight"].includes(e.code))
-		return;
-	slider.step = e.code.startsWith("Alt")
-		? state.dimZ.step / 10
-		: state.dimZ.step * 10;
+	if (!["AltLeft", "AltRight", "ShiftLeft", "ShiftRight"].includes(e.code)) return;
+	slider.step = e.code.startsWith("Alt") ? state.dimZ.step / 10 : state.dimZ.step * 10;
 });
 
 document.addEventListener("keyup", (e) => {
 	if (+slider.step === state.dimZ.step) return;
-	if (!["AltLeft", "AltRight", "ShiftLeft", "ShiftRight"].includes(e.code))
-		return;
+	if (!["AltLeft", "AltRight", "ShiftLeft", "ShiftRight"].includes(e.code)) return;
 	slider.step = state.dimZ.step;
 });
 
@@ -528,14 +494,7 @@ slider.addEventListener("click", () => {
 
 slider.addEventListener("keydown", (e) => {
 	// Firefox workaround
-	if (
-		!(
-			isFirefox &&
-			e.altKey &&
-			["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(e.code)
-		)
-	)
-		return;
+	if (!(isFirefox && e.altKey && ["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(e.code))) return;
 	if (["ArrowLeft", "ArrowDown"].includes(e.code)) slider.stepDown();
 	else slider.stepUp();
 	slider.dispatchEvent(new InputEvent("input"));
@@ -544,8 +503,7 @@ slider.addEventListener("keydown", (e) => {
 slider.addEventListener("input", () => {
 	state.zval = parseFloat(slider.value);
 	updateStatusLine();
-	if (state.debug && state.renderTime)
-		debugInfo.innerText = `rendered in ${state.renderTime.toFixed(1)} ms`;
+	if (state.debug && state.renderTime) debugInfo.innerText = `rendered in ${state.renderTime.toFixed(1)} ms`;
 	if (!state.busy) {
 		window.requestAnimationFrame(renderColorSpace);
 		state.busy = true;
@@ -564,12 +522,7 @@ select(".gradient .handle").forEach(makeDraggable);
 
 document.addEventListener("paste", (e) => {
 	const target = e.target;
-	if (
-		target instanceof HTMLInputElement ||
-		target instanceof HTMLTextAreaElement ||
-		target?.isContentEditable
-	)
-		return;
+	if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return;
 	const pasted = e.clipboardData?.getData("text");
 	if (!pasted) return;
 	if (applyColorToHandle(pasted)) e.preventDefault();
