@@ -99,7 +99,7 @@ function updateStatusLine() {
 	oklch[state.dimY.index] = state[handleKey][1];
 	oklch[state.dimZ.index] = state.zval;
 
-	handleNameLabel.innerText = `[${handleKey}]`;
+	handleNameLabel.innerText = handleKey === "from" ? "▶▶" : "◀◀";
 	lightnessValueLabel.innerText = oklch[0].toFixed(3);
 	chromaValueLabel.innerText = oklch[1].toFixed(4);
 	hueValueLabel.innerText = oklch[2].toFixed(1);
