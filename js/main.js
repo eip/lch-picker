@@ -10,10 +10,10 @@ const state = {
 		},
 	},
 	axes: "hlc",
-	from: [0, 0.77], // #fe8ab0
-	to: [230, 0.77], // #29c4fe
-	zval: 0.145,
-	steps: 5,
+	from: [0, 0.76], // #f78aad
+	to: [300, 0.76], // #bf9cfb
+	zval: 0.137,
+	steps: 6,
 };
 
 const docStyle = getComputedStyle(document.body);
