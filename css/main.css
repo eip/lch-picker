@@ -305,6 +305,7 @@ input[type="range"]:focus::-moz-range-thumb {
 
 .widget .gradient .handle.clipped {
 	border-color: var(--swatch-clipped-color);
+	outline-color: var(--swatch-clipped-color);
 }
 
 .widget .canvas .gradient svg circle.clipped {
