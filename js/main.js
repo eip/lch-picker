@@ -10,8 +10,9 @@ const state = {
 		},
 	},
 	axes: "hlc",
-	from: "#ec80a1",
-	to: "#08b1e6",
+	from: [0, 0.77], // #fe8ab0
+	to: [230, 0.77], // #29c4fe
+	zval: 0.145,
 	steps: 5,
 };
 
@@ -436,7 +437,7 @@ function updateColors() {
 }
 
 function updateAxes(axes) {
-	if (state.axes === axes && is(Array, state.from) && is(Array, state.to)) return;
+	if (state.axes === axes && is(Array, state.from) && is(Array, state.to) && state.dimX && state.dimY && state.dimZ) return;
 	const prevZ = state.zval;
 	state.dimX = state.colorSpace.dimension[axes[0]];
 	state.dimY = state.colorSpace.dimension[axes[1]];
@@ -478,13 +479,45 @@ function updateStateFromLocation() {
 	if (select(".tab[data-axes]").some((e) => e.dataset.axes === axes)) state.axes = axes;
 	const numSteps = parseInt(steps, 10);
 	if (numSteps >= minSteps && numSteps <= maxSteps) state.steps = numSteps;
+	const axisIndex = { l: 0, c: 1, h: 2 };
+
+	function parseOklchTriplet(value) {
+		if (!value?.includes(",")) return null;
+		const parts = value.split(",");
+		if (parts.length !== 3) return null;
+		const parsed = parts.map((part) => parseFloat(part));
+		if (parsed.some(Number.isNaN)) return null;
+		const [l, c, h] = parsed;
+		if (l < 0 || l > 1 || c < 0 || c > state.colorSpace.dimension.c.max || h < 0 || h > 360) return null;
+		return [l, c, h];
+	}
+
+	const fromOklch = parseOklchTriplet(from);
+	const toOklch = parseOklchTriplet(to);
+	if (fromOklch && toOklch) {
+		state.from = [fromOklch[axisIndex[state.axes[0]]], fromOklch[axisIndex[state.axes[1]]]];
+		state.to = [toOklch[axisIndex[state.axes[0]]], toOklch[axisIndex[state.axes[1]]]];
+		state.zval = fromOklch[axisIndex[state.axes[2]]];
+		return;
+	}
+
 	const colorRe = /^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 	if (colorRe.test(from)) state.from = from;
 	if (colorRe.test(to)) state.to = to;
 }
 
 function updateLocation() {
-	window.location.hash = `#${state.axes}/${state.steps}/${state.colors[0].value.slice(1)}/${state.colors[state.colors.length - 1].value.slice(1)}`;
+	if (!is(Array, state.from) || !is(Array, state.to) || !state.dimX || !state.dimY || !state.dimZ) return;
+
+	function oklchPointToHash(point) {
+		const oklch = [0, 0, 0];
+		oklch[state.dimX.index] = point[0];
+		oklch[state.dimY.index] = point[1];
+		oklch[state.dimZ.index] = state.zval;
+		return `${oklch[0].toFixed(6)},${oklch[1].toFixed(6)},${oklch[2].toFixed(4)}`;
+	}
+
+	window.location.hash = `#${state.axes}/${state.steps}/${oklchPointToHash(state.from)}/${oklchPointToHash(state.to)}`;
 }
 
 function colorMap() {
@@ -507,12 +540,14 @@ function init() {
 window.addEventListener("load", init);
 
 document.addEventListener("keydown", (e) => {
+	if (!state.dimZ) return;
 	if (+slider.step !== state.dimZ.step) return;
 	if (!["AltLeft", "AltRight", "ShiftLeft", "ShiftRight"].includes(e.code)) return;
 	slider.step = e.code.startsWith("Alt") ? state.dimZ.step / 10 : state.dimZ.step * 10;
 });
 
 document.addEventListener("keyup", (e) => {
+	if (!state.dimZ) return;
 	if (+slider.step === state.dimZ.step) return;
 	if (!["AltLeft", "AltRight", "ShiftLeft", "ShiftRight"].includes(e.code)) return;
 	slider.step = state.dimZ.step;
@@ -533,6 +568,7 @@ slider.addEventListener("keydown", (e) => {
 });
 
 slider.addEventListener("input", () => {
+	if (!state.dimZ) return;
 	state.zval = parseFloat(slider.value);
 	updateStatusLine();
 	if (state.debug && state.renderTime) debugInfo.innerText = `rendered in ${state.renderTime.toFixed(1)} ms`;
