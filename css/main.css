@@ -292,8 +292,7 @@ input[type="range"]:focus::-moz-range-thumb {
 }
 
 .widget .gradient .handle:focus {
-	border: 3px solid white;
-	outline: none;
+	outline: 2px solid white;
 }
 
 .widget .canvas .gradient svg line {
