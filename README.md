@@ -2,6 +2,8 @@
 
 This project has been forked from [Colorpicker for data](https://github.com/tristen/hcl-picker) by Tristen Brown but changed a lot.
 
+An interactive tool for generating perceptually balanced color palettes for data visualization. Define the number of colors, then adjust Lightness, Chroma, and Hue across the OKLCH color space to create sequences where every step looks equally distinct to the human eye. Export the result as a list of hex codes ready to use in your charts, maps, or UI.
+
 OKLCH is a modern, perceptually uniform color model that defines colors using Lightness, Chroma, and Hue. It overcomes the inconsistencies of older models like RGB and HSL by ensuring that equal changes in numerical values result in equal visual changes, while also unlocking access to millions of vibrant, wide-gamut colors.
 
 ## Credits
